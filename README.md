@@ -4,49 +4,70 @@ LibreThinker is a LibreOffice Writer extension that brings AI-assisted text
 editing directly into your sidebar. It integrates an LLM to help you rewrite, improve, 
 and edit text without leaving your document.
 
-You can use a free online LLM (no signup required), self-hosted Ollama, or bring your API key (ChatGPT/OpenAI, Mistral, Groq, etc).
+You can use a free online LLM (no signup required), OpenRouter, self-hosted Ollama, LM Studio, or bring your own API key (ChatGPT/OpenAI, Mistral, Groq, etc).
 
 ![Screenshot](./screenshot.png)
 
 ## Quickstart
 
-Download the latest extension file (.oxt) from the [releases page](https://github.com/mihailthebuilder/librethinker-extension/releases/). Open LibreOffice Writer, go to *Tools > Extension Manager > Add*, and select the downloaded .oxt file to install.
+Download the latest extension file (.oxt) from the [releases page](https://github.com/mihailthebuilder/librethinker-extension/releases/) or [build from source](#building-from-source). Open LibreOffice Writer, go to *Tools > Extension Manager > Add*, and select the downloaded `.oxt` file to install.
 
 Open the sidebar in LibreOffice; you should see the lightbulb icon for the extension. Click the icon to open the extension panel, then you're ready to start using the free model!
 
-## Bring your API key
+## OpenRouter & OpenAI-Compatible Endpoints
 
-You can connect to a wide range of LLM APIs using your own API key.
+You can connect directly to **OpenRouter**, **LM Studio**, **llama.cpp**, **vLLM**, or any OpenAI-compatible provider:
 
-Go to [LiteLLM's model directory](https://models.litellm.ai/), and find the model that you wish to connect to. Copy its value from the `Model` column - eg `gpt-5.2`, or `mistral/mistral-medium`.
+1. **Model ID**: Enter the model identifier as expected by the provider (e.g. `nvidia/nemotron-3-ultra-550b-a55b:free` or `google/gemma-2-9b-it`). **No `sh/` prefix is required** when a custom `Model URL` is set.
+2. **Model URL**: Set the provider's chat completions endpoint:
+   - **OpenRouter**: `https://openrouter.ai/api/v1/chat/completions`
+   - **LM Studio**: `http://127.0.0.1:1234/v1/chat/completions`
+   - **Local / Remote OpenAI-compatible server**: `http://<host>:<port>/v1/chat/completions`
+3. **Model API key**: You can provide the raw API key or reference an environment variable (see below).
+4. Click **Save settings**.
 
-Go back to the extension, and set the value as the model ID in the Optional Settings section. Then set the API key in that section as well.
+## Environment Variable Resolution for API Keys
 
-The extension will now use the LLM vendor's API, with your key, to generate the text.
+You don't need to hardcode sensitive API keys into LibreOffice:
+- In the **Model API key** field, you can type the environment variable name:
+  - Plain: `OPENROUTER_API_KEY`
+  - Linux/macOS style: `$OPENROUTER_API_KEY`
+  - Windows style: `%OPENROUTER_API_KEY%`
+- If you use an OpenRouter URL and leave the API key blank, the extension will automatically look up `OPENROUTER_API_KEY` from your environment (including the Windows User Registry).
+
+## Customizable System Prompt
+
+The BYOK/Ollama Settings section includes a **System prompt** text area:
+- Customize assistant behavior, output constraints (e.g. *"Return only the rewritten text without markdown fences"*), tone, or persona.
+- Changes are persisted locally across LibreOffice sessions when you click **Save settings**.
 
 ## Ollama
 
-In the BYOK/Ollama Settings, set the model ID with the `sh/` prefix; for example, `sh/gemma3:1b` to use the `gemma3:1b` Ollama model. (The older `sh/ollama/` prefix still works but is deprecated.)
+For local Ollama instances:
+- **Default endpoint**: Leave `Model URL` blank and prefix the model ID with `sh/` (e.g. `sh/gemma2:2b`). Requests will go to `http://localhost:11434/api/chat`.
+- **Custom endpoint**: Alternatively, specify `Model URL` (e.g. `http://localhost:11434/api/chat` or a remote URL) and use the plain model name (e.g. `gemma2:2b`) without any prefix.
 
-By default, the extension sends the request to `http://localhost:11434/api/chat`. You can change the URL by
-setting a value in the `Model URL` input.
+## Bring Your Own Key (LibreThinker Cloud Backend)
 
-Values in the `Model API key` will be passed in the `Authorization: Bearer $API_KEY` header. This is useful
-if you're self-hosting on a remote machine, and you want to verify requests to that endpoint before
-processing them.
+You can also use the cloud proxy path via [LiteLLM's model directory](https://models.litellm.ai/):
+1. Copy the model name from LiteLLM (e.g. `gpt-4o` or `mistral/mistral-medium`).
+2. Leave `Model URL` blank.
+3. Set your vendor's API key in **Model API key**.
 
-## LM Studio and other OpenAI-compatible servers
+## Building from Source
 
-The self-hosted path also works with any OpenAI-compatible chat endpoint (LM Studio, llama.cpp, vLLM, etc).
-Set the model ID with the `sh/` prefix (e.g. `sh/google/gemma-4-e4b`), and set the
-`Model URL` to the server's OpenAI-compatible chat completions endpoint. The longer `sh/ollama/` prefix
-also routes to the self-hosted path, but is deprecated; prefer `sh/`.
+To package the `.oxt` extension yourself:
 
-For LM Studio, that URL is `http://127.0.0.1:1234/v1/chat/completions` (not its native `/api/v1/chat`).
+```powershell
+# On Windows PowerShell
+.\build.ps1
+```
+
+This generates `dist/LibreThinker.oxt`, which can be added directly via LibreOffice *Tools > Extension Manager > Add...*.
 
 ## Buy me a coffee
 
-You can leave a tip at https://ko-fi.com/mihailmarian to support my work.
+You can leave a tip at https://ko-fi.com/mihailmarian to support the original author's work.
 
 ## License
 
