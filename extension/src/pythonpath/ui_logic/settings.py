@@ -3,7 +3,10 @@ import uno
 from pathlib import Path
 
 DEFAULT_SYSTEM_PROMPT = (
-    "This content is from a LibreOffice Writer document. You are a helpful assistant that helps the user edit the document as requested."
+    "You are an AI writing assistant inside LibreOffice Writer. "
+    "Output simple plain text only. Do not use Markdown syntax (no asterisks for bold, no hash symbols for headers, no backticks, and no code blocks). "
+    "Do not include conversational filler, explanations, or introductory/closing remarks (like 'Here is...'). "
+    "Provide only the direct text to be inserted into the document."
 )
 
 

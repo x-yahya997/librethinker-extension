@@ -9,7 +9,7 @@
 
 import uno, tempfile, unohelper
 import os, random, string, threading
-from .utils import is_older, is_self_hosted, self_hosted_model, resolve_api_key
+from .utils import is_older, is_self_hosted, self_hosted_model, resolve_api_key, clean_markdown_text
 from dataclasses import dataclass
 
 
@@ -232,7 +232,7 @@ class Panel1(Panel1_UI):
             currentComponent = desktop.getCurrentComponent()
             selection = currentComponent.CurrentController.getSelection()
             text_range = selection.getByIndex(0)
-            text_range.setString(response.answer)
+            text_range.setString(clean_markdown_text(response.answer))
 
             self.StatusText.Label = response.label
 

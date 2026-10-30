@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 def is_older(v1: str, v2: str) -> bool:
     """Compares two version strings (e.g., '1.2.3' and '1.3.0'). Returns True if v1 is older than v2."""
@@ -106,3 +107,55 @@ def resolve_api_key(api_key: str, model_url: str = "") -> str:
                 return resolved
 
     return key
+
+
+def clean_markdown_text(text: str) -> str:
+    """Cleans raw markdown syntax from an LLM response so it reads as plain, unadorned text in LibreOffice Writer."""
+    if not text:
+        return ""
+
+    text = text.strip()
+
+    # 1. Strip enclosing code fences (e.g. ```markdown ... ``` or ``` ... ```)
+    fence_match = re.match(r"^```[a-zA-Z0-9_-]*\r?\n([\s\S]*?)\r?\n```$", text)
+    if fence_match:
+        text = fence_match.group(1).strip()
+    else:
+        text = re.sub(r"^```[a-zA-Z0-9_-]*\r?\n", "", text)
+        text = re.sub(r"\r?\n```$", "", text)
+
+    # 2. Strip conversational preambles/postambles commonly output by LLMs
+    text = re.sub(
+        r"^(?:Here (?:is|are) (?:the |an? )?(?:revised|edited|improved|rewritten|requested)?\s*(?:text|version|document|paragraph|sentence|response)?:\s*)\r?\n+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"\r?\n+(?:I hope this helps!?|Let me know if you (?:need|would like) (?:any )?(?:further|additional|other) (?:changes|edits|help)\.?).*$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # 3. Strip bold and italic markdown markers while preserving the content
+    text = re.sub(r"\*\*\*(.*?)\*\*\*", r"\1", text)
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    text = re.sub(r"\*([^\*\n]+)\*", r"\1", text)
+    text = re.sub(r"___(.*?)___", r"\1", text)
+    text = re.sub(r"__(.*?)__", r"\1", text)
+    text = re.sub(r"_([^_\n]+)_", r"\1", text)
+
+    # 4. Strip markdown heading tags (e.g. '### Heading' -> 'Heading')
+    text = re.sub(r"(?m)^#{1,6}\s+", "", text)
+
+    # 5. Strip inline code backticks (`code` -> code)
+    text = re.sub(r"`([^`\n]+)`", r"\1", text)
+
+    # 6. Strip blockquote markers (> quote -> quote)
+    text = re.sub(r"(?m)^>\s*", "", text)
+
+    # 7. Strip markdown links [text](url) -> text (url)
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
+
+    return text.strip()
