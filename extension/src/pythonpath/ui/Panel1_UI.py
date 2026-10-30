@@ -51,7 +51,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.DialogModel.PositionX = "204"
         self.DialogModel.PositionY = "117"
         self.DialogModel.Width = 156
-        self.DialogModel.Height = 400
+        self.DialogModel.Height = 470
         self.DialogModel.Closeable = True
         self.DialogModel.Moveable = True
 
@@ -281,7 +281,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.ModelApiKeyLabel.PositionY = self.ModelUrl.PositionY + 20
         self.ModelApiKeyLabel.Width = 136
         self.ModelApiKeyLabel.Height = 10
-        self.ModelApiKeyLabel.Label = "Model API key"
+        self.ModelApiKeyLabel.Label = "Model API key (or env var name)"
         self.ModelApiKeyLabel.MultiLine = True
 
         self.DialogModel.insertByName("ModelApiKeyLabel", self.ModelApiKeyLabel)
@@ -302,15 +302,46 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("ModelApiKey", self.ModelApiKey)
 
+        # --------- create System Prompt control, set properties ---
+        self.SystemPromptLabel = self.DialogModel.createInstance(
+            "com.sun.star.awt.UnoControlFixedTextModel"
+        )
+        self.SystemPromptLabel.Name = "SystemPromptLabel"
+        self.SystemPromptLabel.PositionX = dialogLeftPadding
+        self.SystemPromptLabel.PositionY = self.ModelApiKey.PositionY + 20
+        self.SystemPromptLabel.Width = 136
+        self.SystemPromptLabel.Height = 10
+        self.SystemPromptLabel.Label = "System prompt"
+        self.SystemPromptLabel.MultiLine = True
+
+        self.DialogModel.insertByName("SystemPromptLabel", self.SystemPromptLabel)
+
+        self.SystemPrompt = self.DialogModel.createInstance(
+            "com.sun.star.awt.UnoControlEditModel"
+        )
+
+        self.SystemPrompt.Name = "SystemPrompt"
+        self.SystemPrompt.TabIndex = self.ModelApiKey.TabIndex + 1
+        self.SystemPrompt.PositionX = dialogLeftPadding
+        self.SystemPrompt.PositionY = self.SystemPromptLabel.PositionY + 10
+        self.SystemPrompt.Width = 136
+        self.SystemPrompt.Height = 45
+        self.SystemPrompt.Text = self.settings.systemPrompt
+        self.SystemPrompt.MultiLine = True
+        self.SystemPrompt.VerticalAlign = "TOP"
+        self.SystemPrompt.AutoVScroll = True
+
+        self.DialogModel.insertByName("SystemPrompt", self.SystemPrompt)
+
         # --------- create an instance of Button control, set properties ---
         self.SaveSettings = self.DialogModel.createInstance(
             "com.sun.star.awt.UnoControlButtonModel"
         )
 
         self.SaveSettings.Name = "SaveSettings"
-        self.SaveSettings.TabIndex = self.ModelApiKey.TabIndex + 1
+        self.SaveSettings.TabIndex = self.SystemPrompt.TabIndex + 1
         self.SaveSettings.PositionX = dialogLeftPadding
-        self.SaveSettings.PositionY = self.ModelApiKey.PositionY + 20
+        self.SaveSettings.PositionY = self.SystemPrompt.PositionY + 50
         self.SaveSettings.Width = 64
         self.SaveSettings.Height = 23
         self.SaveSettings.Label = "Save settings"
@@ -329,7 +360,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         )
         self.SaveSettingsStatus.Name = "SaveSettingsStatus"
         self.SaveSettingsStatus.PositionX = dialogLeftPadding
-        self.SaveSettingsStatus.PositionY = self.SaveSettings.PositionY + 30
+        self.SaveSettingsStatus.PositionY = self.SaveSettings.PositionY + 28
         self.SaveSettingsStatus.Width = 136
         self.SaveSettingsStatus.Height = 30
         self.SaveSettingsStatus.Label = ""

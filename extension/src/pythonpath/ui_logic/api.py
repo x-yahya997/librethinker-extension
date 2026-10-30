@@ -186,9 +186,21 @@ class LtClient:
 
 class OllamaClient:
     def getAnswer(
-        self, userPrompt: str, text: str, model: str, modelUrl: str, apiKey: str
+        self,
+        userPrompt: str,
+        text: str,
+        model: str,
+        modelUrl: str,
+        apiKey: str,
+        systemPrompt: str = "",
     ) -> OllamaClientResponse:
         try:
+            effective_system_prompt = (
+                systemPrompt.strip()
+                if systemPrompt and systemPrompt.strip()
+                else "This content is from a LibreOffice Writer document. You are a helpful assistant that helps the user edit the document as requested."
+            )
+
             body = json.dumps(
                 {
                     "model": model,
@@ -196,7 +208,7 @@ class OllamaClient:
                     "messages": [
                         {
                             "role": "system",
-                            "content": "This content is from a LibreOffice Writer document. You are a helpful assistant that helps the user edit the document as requested.",
+                            "content": effective_system_prompt,
                         },
                         {
                             "role": "user",

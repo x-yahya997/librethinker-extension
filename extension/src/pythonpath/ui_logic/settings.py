@@ -2,6 +2,10 @@ import json
 import uno
 from pathlib import Path
 
+DEFAULT_SYSTEM_PROMPT = (
+    "This content is from a LibreOffice Writer document. You are a helpful assistant that helps the user edit the document as requested."
+)
+
 
 class Settings:
     def __init__(self, ctx):
@@ -15,6 +19,7 @@ class Settings:
         self.modelId = data.get("modelId", "")
         self.apiKey = data.get("apiKey", "")
         self.modelUrl = data.get("modelUrl", "")
+        self.systemPrompt = data.get("systemPrompt", DEFAULT_SYSTEM_PROMPT)
         self.savedPrompt = data.get("savedPrompt", "")
 
     @staticmethod
@@ -24,10 +29,11 @@ class Settings:
         user_config_path = Path(uno.fileUrlToSystemPath(user_config_url))
         return user_config_path / "LibreThinkerConfig.json"
 
-    def save(self, modelId: str, apiKey: str, modelUrl: str):
+    def save(self, modelId: str, apiKey: str, modelUrl: str, systemPrompt: str = ""):
         self.modelId = modelId
         self.apiKey = apiKey
         self.modelUrl = modelUrl
+        self.systemPrompt = systemPrompt if systemPrompt.strip() else DEFAULT_SYSTEM_PROMPT
         self._persist()
 
     def savePrompt(self, prompt: str):
@@ -43,6 +49,7 @@ class Settings:
             "modelId": self.modelId,
             "apiKey": self.apiKey,
             "modelUrl": self.modelUrl,
+            "systemPrompt": self.systemPrompt,
             "savedPrompt": self.savedPrompt,
         }
         with open(self.settingsFilePath, "w", encoding="utf-8") as f:

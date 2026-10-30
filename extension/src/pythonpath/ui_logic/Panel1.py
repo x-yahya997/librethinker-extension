@@ -9,7 +9,7 @@
 
 import uno, tempfile, unohelper
 import os, random, string, threading
-from .utils import is_older, is_self_hosted, self_hosted_model
+from .utils import is_older, is_self_hosted, self_hosted_model, resolve_api_key
 from dataclasses import dataclass
 
 
@@ -208,13 +208,21 @@ class Panel1(Panel1_UI):
 
             model: str = self.DialogContainer.getControl("ModelId").getText()
             modelUrl: str = self.DialogContainer.getControl("ModelUrl").getText()
-            apiKey: str = self.DialogContainer.getControl("ModelApiKey").getText()
+            rawApiKey: str = self.DialogContainer.getControl("ModelApiKey").getText()
+            systemPrompt: str = self.DialogContainer.getControl("SystemPrompt").getText()
+
+            apiKey = resolve_api_key(rawApiKey, modelUrl)
 
             response = (
                 self.server_response(inputPrompt, docText, model, apiKey)
-                if not is_self_hosted(model)
+                if not is_self_hosted(model, modelUrl)
                 else self.ollama_response(
-                    inputPrompt, docText, self_hosted_model(model), modelUrl, apiKey
+                    inputPrompt,
+                    docText,
+                    self_hosted_model(model),
+                    modelUrl,
+                    apiKey,
+                    systemPrompt=systemPrompt,
                 )
             )
 
@@ -269,7 +277,13 @@ class Panel1(Panel1_UI):
         return Response(answer=answer.response, label=label)
 
     def ollama_response(
-        self, userPrompt: str, text: str, model: str, modelUrl: str, apiKey: str
+        self,
+        userPrompt: str,
+        text: str,
+        model: str,
+        modelUrl: str,
+        apiKey: str,
+        systemPrompt: str = "",
     ) -> Response:
         client = OllamaClient()
         answer = client.getAnswer(
@@ -278,13 +292,14 @@ class Panel1(Panel1_UI):
             model=model,
             modelUrl=modelUrl,
             apiKey=apiKey,
+            systemPrompt=systemPrompt,
         )
         if not answer.success:
             error_message = (
-                f"Error getting response from Ollama.\nDetails: {str(answer.message)}"
+                f"Error getting response from LLM.\nDetails: {str(answer.message)}"
             )
             raise Exception(error_message)
-        label = f"Done. Generated with Ollama model {model}."
+        label = f"Done. Generated with model {model}."
         return Response(answer=answer.response, label=label)
 
     def SavePrompt_OnClick(self):
@@ -306,8 +321,14 @@ class Panel1(Panel1_UI):
             model = self.DialogContainer.getControl("ModelId").getText()
             apiKey = self.DialogContainer.getControl("ModelApiKey").getText()
             modelUrl = self.DialogContainer.getControl("ModelUrl").getText()
+            systemPrompt = self.DialogContainer.getControl("SystemPrompt").getText()
 
-            self.settings.save(modelId=model, apiKey=apiKey, modelUrl=modelUrl)
+            self.settings.save(
+                modelId=model,
+                apiKey=apiKey,
+                modelUrl=modelUrl,
+                systemPrompt=systemPrompt,
+            )
 
             self.SaveSettingsStatus.Label = "Saved."
 
@@ -348,7 +369,7 @@ def Run_Panel1(*args):
 
     # dialog
     dialog = ctx.ServiceManager.createInstanceWithContext(
-        "com.sun.star.awt.UnoControlDialog", ctx
+        "com.sun.star.awt.UnoControlDialogModel", ctx
     )
 
     app = Panel1(ctx=ctx, dialog=dialog)
@@ -357,36 +378,4 @@ def Run_Panel1(*args):
 
 g_exportedScripts = (Run_Panel1,)
 
-# -------------------------------------
-# HELPER FOR AN IDE
-# -------------------------------------
-
-
-if __name__ == "__main__":
-    """Connect to LibreOffice proccess.
-    1) Start the office in shell with command:
-    soffice "--accept=socket,host=127.0.0.1,port=2002,tcpNoDelay=1;urp;StarOffice.ComponentContext" --norestore
-    2) Run script
-    """
-    import os
-    import sys
-
-    sys.path.append(os.path.join(os.path.dirname(__file__), "pythonpath"))
-
-    local_ctx = uno.getComponentContext()
-    resolver = local_ctx.ServiceManager.createInstance(
-        "com.sun.star.bridge.UnoUrlResolver"
-    )
-    try:
-        remote_ctx = resolver.resolve(
-            "uno:socket,"
-            "host=127.0.0.1,"
-            "port=2002,"
-            "tcpNoDelay=1;"
-            "urp;"
-            "StarOffice.ComponentContext"
-        )
-    except Exception as err:
-        print(err)
-
-    Run_Panel1()
+# ----------------- END CONTROLLER CODE ---------------------------------------
